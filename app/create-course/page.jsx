@@ -1,12 +1,14 @@
 "use client";
 import React from 'react';
 import { useState } from "react";
-// CORRECTED: Relative path to find the config folder from the create-course folder.
 import { generateCourseStructure, generateCodeFromStructure } from "../../configs/AiModel.jsx"; 
 import { BiCategory } from "react-icons/bi";
 import { TbTargetArrow } from "react-icons/tb";
 import { IoIosOptions } from "react-icons/io";
 import { Button } from '@/components/ui/button';
+import CourseLayoutDisplay from "./_components/CourseLayoutDisplay";
+// --- NEW: Import the Markdown renderer component ---
+import MarkdownRenderer from "./_components/MarkdownRenderer";
 
 // --- Form Components (CategoryForm, TopicDetailsForm, OptionsForm) ---
 // (Your original form components go here, unchanged)
@@ -270,9 +272,8 @@ function CreateCourse() {
                         <p className="text-gray-600 mb-8">Review the structure. Confirm to generate the full course.</p>
                         {isLoading ? <LoadingSpinner text="Generating layout..."/> : (
                             <>
-                                <div className="bg-gray-800 text-white p-6 rounded-lg text-left font-mono text-sm overflow-x-auto max-h-[50vh]">
-                                    <pre>{JSON.stringify(courseLayout, null, 2)}</pre>
-                                </div>
+                                <CourseLayoutDisplay layout={courseLayout} />
+                                
                                 <div className='flex justify-center mt-10 gap-5'>
                                     <Button onClick={() => setView('form')} variant='outline' disabled={isLoading}>Back to Edit</Button>
                                     <Button onClick={handleConfirmGeneration} disabled={isLoading || !courseLayout}>
@@ -290,8 +291,9 @@ function CreateCourse() {
                         {isLoading ? <LoadingSpinner text="Generating your full course..."/> : (
                              <>
                                 {error && <ErrorMessage message={error} />}
-                                <div className="bg-white p-6 border border-gray-200 rounded-lg text-left prose max-w-none max-h-[70vh] overflow-y-auto">
-                                    <pre className="whitespace-pre-wrap font-sans">{finalCourse || "No content was generated."}</pre>
+                                <div className="bg-white p-8 border border-gray-200 rounded-lg max-h-[70vh] overflow-y-auto">
+                                    {/* --- UPDATED: Use the new renderer instead of <pre> --- */}
+                                    <MarkdownRenderer content={finalCourse} />
                                 </div>
                                 <div className="text-center mt-10">
                                     <Button onClick={() => { setView('form'); setActiveStep(1); }}>Create Another Course</Button>
