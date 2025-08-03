@@ -1,77 +1,81 @@
-// Import necessary packages
-const { GoogleGenerativeAI } = require("@google/generative-ai");
-require('dotenv').config(); // Loads environment variables from a .env file
+// AiModel.js
+import { GoogleGenerativeAI } from "@google/generative-ai";
 
-// Get the API key from the .env file
-const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+// This line reads the key you set in .env.local after you restart the server.
+const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY);
 
-// Check if the API key is available
-if (!GEMINI_API_KEY) {
-    throw new Error("GEMINI_API_KEY is not defined in the .env file.");
-}
+export async function generateCourseStructure(userInput) {
+  // CORRECTED: Use the latest, most stable model name.
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
 
-// Initialize the Generative AI client
-const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+  const prompt = `
+    Generate a course structure in JSON format with the following details:
+    - Category: ${userInput.category}
+    - Topic: ${userInput.topic}
+    - Description: ${userInput.description}
+    - Level: ${userInput.difficulty}
+    - Duration: ${userInput.duration} hours
+    - Chapters: ${userInput.chapters}
 
-// This is the prompt from your image
-const prompt = `
-Generate A Course Tutorial on Following Detail With field as Course Name,
-Description, Along with Chapter Name, about, Duration.
-Category: 'Programming', Topic: Python, Level:Basic, Duration:1.hours,
-NoOf Chapters:5, in JSON format.
-`;
+    The response must be ONLY the JSON object, without any extra text, explanations, or markdown formatting.
 
-/**
- * An asynchronous function to call the Gemini API and generate the course tutorial.
- */
-async function generateCourseTutorial() {
-    try {
-        console.log("Sending prompt to Gemini API...");
-
-        // Select the generative model
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-
-        // Start a chat session with the model
-        const chatSession = model.startChat({
-            history: [],
-            generationConfig: {
-                // You can add generation config here if needed
-            },
-        });
-
-        // Send the prompt to the chat session
-        const result = await chatSession.sendMessage(prompt);
-        const response = await result.response;
-        let text = response.text();
-
-        console.log("Received response from API.");
-
-        // ---- Data Cleaning ----
-        // AI responses can sometimes include markdown formatting like ```json ... ```
-        // This code cleans it up before parsing.
-        if (text.startsWith("```json")) {
-            text = text.substring(7, text.length - 3).trim();
-        } else if (text.startsWith("```")) {
-            text = text.substring(3, text.length - 3).trim();
-        }
-
-        // ---- Parsing and Using the Data ----
-        // Parse the cleaned text string into a JavaScript object
-        const courseData = JSON.parse(text);
-
-        console.log("\n--- Successfully Generated Course Tutorial ---");
-        console.log(courseData);
-        
-        // Now you can use the data in your application
-        console.log(`\nCourse Name: ${courseData.courseName}`);
-        console.log(`First Chapter: ${courseData.chapters[0].chapterName}`);
-
-        return courseData;
-
-    } catch (error) {
-        console.error("ERROR generating content:", error);
+    Format:
+    {
+      "courseName": "...", "description": "...", "category": "...", "topic": "...",
+      "level": "...", "duration": "...", "numberOfChapters": ...,
+      "chapters": [{"chapterName": "...", "about": "...", "duration": "..."}]
     }
+  `;
+
+  let rawTextResponse = '';
+
+  try {
+    const result = await model.generateContent(prompt);
+    const response = result.response;
+
+    if (response.promptFeedback?.blockReason) {
+      throw new Error(`Request was blocked: ${response.promptFeedback.blockReason}`);
+    }
+    if (response.candidates[0].finishReason !== 'STOP') {
+        throw new Error(`The model stopped generating for an unexpected reason: ${response.candidates[0].finishReason}`);
+    }
+
+    rawTextResponse = response.text();
+
+    const startIndex = rawTextResponse.indexOf('{');
+    const endIndex = rawTextResponse.lastIndexOf('}');
+    
+    if (startIndex === -1 || endIndex === -1) {
+      throw new Error("Could not find a valid JSON object in the AI's response.");
+    }
+    
+    const jsonString = rawTextResponse.substring(startIndex, endIndex + 1);
+    return JSON.parse(jsonString);
+
+  } catch (error) {
+    console.error("--- RAW AI RESPONSE ---");
+    console.error(rawTextResponse);
+    console.error("--- ERROR DETAILS ---");
+    console.error(error);
+    
+    throw new Error(`Failed to get a valid course structure from the AI. Reason: ${error.message}`);
+  }
 }
 
-// Run the function
-generateCourseTutorial();
+export async function generateCodeFromStructure(courseJson) {
+  // CORRECTED: Use the latest, most stable model name.
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+  const prompt = `Based on this course JSON, generate a detailed Python tutorial in Markdown format:\n\n${JSON.stringify(courseJson, null, 2)}`;
+  
+  try {
+      const result = await model.generateContent(prompt);
+      const response = result.response;
+      if (response.promptFeedback?.blockReason) {
+        throw new Error(`Request was blocked: ${response.promptFeedback.blockReason}`);
+      }
+      return response.text();
+  } catch(error) {
+      console.error("Error generating final course code:", error);
+      throw new Error(`Failed to generate the final course content. Reason: ${error.message}`);
+  }
+}
