@@ -1,49 +1,55 @@
 import React from 'react';
+import ReactMarkdown from 'react-markdown';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
 
-// This component takes a string of Markdown and converts it into styled HTML elements.
 const MarkdownRenderer = ({ content }) => {
   if (!content) {
     return <p className="text-gray-500">No content to display.</p>;
   }
 
-  // This is a simple parser that converts each line of Markdown into the correct HTML tag.
-  const renderLine = (line, index) => {
-    // Matches H1: # Title
-    if (line.startsWith('# ')) {
-      return <h1 key={index} className="text-4xl font-extrabold mt-8 mb-4">{line.substring(2)}</h1>;
-    }
-    // Matches H2: ## Subtitle
-    if (line.startsWith('## ')) {
-      return <h2 key={index} className="text-3xl font-bold mt-6 mb-3 border-b pb-2">{line.substring(3)}</h2>;
-    }
-    // Matches H3: ### Section
-     if (line.startsWith('### ')) {
-      return <h3 key={index} className="text-2xl font-semibold mt-5 mb-2">{line.substring(4)}</h3>;
-    }
-    // Matches bold text: **Bold**
-    if (line.startsWith('**')) {
-      return <p key={index} className="font-bold my-4 text-lg">{line.replace(/\*\*/g, '')}</p>;
-    }
-    // Matches list items: * Item or 1. Item
-    if (line.startsWith('* ') || /^\d+\.\s/.test(line)) {
-        const content = line.startsWith('* ') ? line.substring(2) : line.replace(/^\d+\.\s/, '');
-        return <li key={index} className="ml-6 list-disc">{content}</li>;
-    }
-    // Matches a horizontal rule: ---
-    if (line.trim() === '---') {
-        return <hr key={index} className="my-8" />;
-    }
-    // Handles empty lines as breaks
-    if (line.trim() === '') {
-      return <br key={index} />;
-    }
-    // Treats anything else as a standard paragraph
-    return <p key={index} className="my-3 leading-relaxed">{line}</p>;
+  // Define custom components for rendering specific Markdown elements
+  const components = {
+    // Custom rendering for code blocks with syntax highlighting
+    code({ node, inline, className, children, ...props }) {
+      const match = /language-(\w+)/.exec(className || '');
+      return !inline && match ? (
+        <SyntaxHighlighter
+          style={vscDarkPlus} // You can change the theme here
+          language={match[1]}
+          PreTag="div"
+          {...props}
+        >
+          {String(children).replace(/\n$/, '')}
+        </SyntaxHighlighter>
+      ) : (
+        <code className={className} {...props}>
+          {children}
+        </code>
+      );
+    },
+    // Custom rendering for lists to match your design
+    ul: ({ children }) => <ul className="list-disc ml-6">{children}</ul>,
+    ol: ({ children }) => <ol className="list-decimal ml-6">{children}</ol>,
+    li: ({ children }) => <li className="my-1 leading-relaxed">{children}</li>,
+    h1: ({ children }) => <h1 className="text-4xl font-extrabold mt-8 mb-4">{children}</h1>,
+    h2: ({ children }) => <h2 className="text-3xl font-bold mt-6 mb-3 border-b pb-2">{children}</h2>,
+    h3: ({ children }) => <h3 className="text-2xl font-semibold mt-5 mb-2">{children}</h3>,
+    p: ({ children }) => <p className="my-3 leading-relaxed">{children}</p>,
+    strong: ({ children }) => <strong className="font-bold">{children}</strong>,
   };
 
   return (
     <div className="prose max-w-none text-left">
-      {content.split('\n').map(renderLine)}
+      <ReactMarkdown
+        components={components}
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeRaw]}
+      >
+        {content}
+      </ReactMarkdown>
     </div>
   );
 };

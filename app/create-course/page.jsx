@@ -1,17 +1,14 @@
 "use client";
-import React from 'react';
-import { useState } from "react";
-import { generateCourseStructure, generateCodeFromStructure } from "../../configs/AiModel.jsx"; 
+
+import React, { useState } from 'react';
 import { BiCategory } from "react-icons/bi";
 import { TbTargetArrow } from "react-icons/tb";
 import { IoIosOptions } from "react-icons/io";
 import { Button } from '@/components/ui/button';
-import CourseLayoutDisplay from "./_components/CourseLayoutDisplay";
-// --- NEW: Import the Markdown renderer component ---
-import MarkdownRenderer from "./_components/MarkdownRenderer";
 
-// --- Form Components (CategoryForm, TopicDetailsForm, OptionsForm) ---
-// (Your original form components go here, unchanged)
+// --- Form Components for each step ---
+// These components are defined within the main file for this page.
+
 const CategoryForm = ({ onSelectCategory, selectedCategory }) => {
     const categories = [
         { id: 1, name: 'Education', description: 'Academic subjects and skills for students.' },
@@ -36,7 +33,7 @@ const CategoryForm = ({ onSelectCategory, selectedCategory }) => {
     return (
         <div className='mt-8'>
             <h3 className='text-2xl font-semibold mb-6 text-center'>Choose Your Course Category</h3>
-            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3'>
+            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
                 {categories.map((category) => (
                     <button
                         key={category.id}
@@ -130,6 +127,7 @@ const OptionsForm = ({ courseOptions, onOptionChange }) => {
         <div className='mt-8'>
             <h3 className='text-2xl font-semibold mb-6 text-center'>Course Options</h3>
             <div className='space-y-8'>
+                {/* Difficulty Section */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Difficulty Level</label>
                     <div className="flex gap-4">
@@ -144,6 +142,8 @@ const OptionsForm = ({ courseOptions, onOptionChange }) => {
                         ))}
                     </div>
                 </div>
+
+                {/* Duration Section */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Course Duration</label>
                     <div className="flex gap-4">
@@ -158,6 +158,8 @@ const OptionsForm = ({ courseOptions, onOptionChange }) => {
                         ))}
                     </div>
                 </div>
+
+                {/* Add Video Section */}
                 <div className="flex items-center justify-between">
                     <label htmlFor="add-video-switch" className="text-sm font-medium text-gray-700">Add a Video?</label>
                     <Switch
@@ -165,6 +167,8 @@ const OptionsForm = ({ courseOptions, onOptionChange }) => {
                         onCheckedChange={(checked) => onOptionChange('addVideo', checked)}
                     />
                 </div>
+
+                {/* Chapters Section */}
                 <div>
                     <label htmlFor="chapters" className="block text-sm font-medium text-gray-700 mb-1">Number of Chapters</label>
                     <input
@@ -181,167 +185,110 @@ const OptionsForm = ({ courseOptions, onOptionChange }) => {
     );
 };
 
-// --- Main App Component ---
-function CreateCourse() {
+// Main App Component
+export default function CreateCourse() {
     const [activeStep, setActiveStep] = useState(1);
     const [formData, setFormData] = useState({
-        category: 'Computer Science',
-        topic: 'Introduction to Python',
-        description: 'A beginner course on Python fundamentals.',
-        difficulty: 'beginner',
-        duration: '2',
+        category: null,
+        topic: '',
+        description: '',
+        difficulty: '',
+        duration: '',
         addVideo: false,
-        chapters: '5',
+        chapters: '',
     });
 
-    const [view, setView] = useState('form');
-    const [isLoading, setIsLoading] = useState(false);
-    const [courseLayout, setCourseLayout] = useState(null);
-    const [finalCourse, setFinalCourse] = useState(null);
-    const [error, setError] = useState(null);
+    const StepperOptions = [{
+        id: 1,
+        name: 'Category',
+        icon: <BiCategory />
+    },
+    {
+        id: 2,
+        name: 'Topic and Details',
+        icon: <TbTargetArrow />
+    },
+    {
+        id: 3,
+        name: 'Options',
+        icon: <IoIosOptions />
+    }];
 
-    const handleGenerateLayout = async () => {
-        setIsLoading(true);
-        setError(null);
-        setView('layout');
-        try {
-            const data = await generateCourseStructure(formData);
-            setCourseLayout(data);
-        } catch (err) {
-            setError(err.message);
-            setView('form');
-        } finally {
-            setIsLoading(false);
+    const handlePrevious = () => {
+        if (activeStep > 1) {
+            setActiveStep(activeStep - 1);
         }
     };
 
-    const handleConfirmGeneration = async () => {
-        if (!courseLayout) return;
-        setIsLoading(true);
-        setError(null);
-        setView('final');
-        try {
-            const content = await generateCodeFromStructure(courseLayout);
-            setFinalCourse(content);
-        } catch (err) {
-            setError(err.message);
-            setView('layout');
-        } finally {
-            setIsLoading(false);
+    const handleNext = () => {
+        if (activeStep < StepperOptions.length) {
+            setActiveStep(activeStep + 1);
         }
     };
-
-    const StepperOptions = [
-        { id: 1, name: 'Category', icon: <BiCategory /> },
-        { id: 2, name: 'Topic and Details', icon: <TbTargetArrow /> },
-        { id: 3, name: 'Options', icon: <IoIosOptions /> }
-    ];
-
-    const handlePrevious = () => activeStep > 1 && setActiveStep(activeStep - 1);
-    const handleNext = () => activeStep < StepperOptions.length && setActiveStep(activeStep + 1);
-    const handleFormChange = (key, value) => setFormData(prev => ({ ...prev, [key]: value }));
+    
+    const handleGenerateCourse = () => {
+        alert(`Course Generated Successfully!`);
+    };
+    
+    const handleFormChange = (key, value) => {
+        setFormData(prevData => ({
+            ...prevData,
+            [key]: value
+        }));
+    };
 
     const isLastStep = activeStep === StepperOptions.length;
     const buttonText = isLastStep ? 'Generate Course Layout' : 'Next';
-    const handleClick = isLastStep ? handleGenerateLayout : handleNext;
+    const handleClick = isLastStep ? handleGenerateCourse : handleNext;
 
     const isNextDisabled = (activeStep === 1 && !formData.category) ||
                            (activeStep === 2 && (!formData.topic || !formData.description)) ||
                            (activeStep === 3 && (!formData.difficulty || !formData.duration || !formData.chapters));
 
-    const LoadingSpinner = ({ text }) => (
-        <div className="flex flex-col items-center justify-center gap-4 my-16">
-            <div className="w-16 h-16 border-4 border-blue-950 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-xl font-semibold text-gray-700">{text}</p>
-        </div>
-    );
-
-    const ErrorMessage = ({ message }) => (
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md my-6">
-            <p className="font-bold">An Error Occurred</p>
-            <p>{message}</p>
-        </div>
-    );
-
-    const renderContent = () => {
-        switch (view) {
-            case 'layout':
-                return (
-                    <div className="text-center">
-                        <h2 className="text-3xl font-bold mb-4">Generated Course Layout</h2>
-                        <p className="text-gray-600 mb-8">Review the structure. Confirm to generate the full course.</p>
-                        {isLoading ? <LoadingSpinner text="Generating layout..."/> : (
-                            <>
-                                <CourseLayoutDisplay layout={courseLayout} />
-                                
-                                <div className='flex justify-center mt-10 gap-5'>
-                                    <Button onClick={() => setView('form')} variant='outline' disabled={isLoading}>Back to Edit</Button>
-                                    <Button onClick={handleConfirmGeneration} disabled={isLoading || !courseLayout}>
-                                        Confirm & Generate Full Course
-                                    </Button>
-                                </div>
-                            </>
-                        )}
-                    </div>
-                );
-            case 'final':
-                return (
-                    <div className="text-center">
-                        <h2 className="text-3xl font-bold mb-4">Your Course is Ready!</h2>
-                        {isLoading ? <LoadingSpinner text="Generating your full course..."/> : (
-                             <>
-                                {error && <ErrorMessage message={error} />}
-                                <div className="bg-white p-8 border border-gray-200 rounded-lg max-h-[70vh] overflow-y-auto">
-                                    {/* --- UPDATED: Use the new renderer instead of <pre> --- */}
-                                    <MarkdownRenderer content={finalCourse} />
-                                </div>
-                                <div className="text-center mt-10">
-                                    <Button onClick={() => { setView('form'); setActiveStep(1); }}>Create Another Course</Button>
-                                </div>
-                            </>
-                        )}
-                    </div>
-                );
-            case 'form':
+    const renderStepContent = () => {
+        switch (activeStep) {
+            case 1:
+                return <CategoryForm onSelectCategory={(value) => handleFormChange('category', value)} selectedCategory={formData.category} />;
+            case 2:
+                return <TopicDetailsForm courseDetails={formData} onInputChange={(key, value) => handleFormChange(key, value)} />;
+            case 3:
+                return <OptionsForm courseOptions={formData} onOptionChange={(key, value) => handleFormChange(key, value)} />;
             default:
-                return (
-                    <>
-                        {error && <ErrorMessage message={error} />}
-                        <div className='flex flex-col justify-center items-center mt-10'>
-                            <h2 className='text-4xl font-medium'>Create Course</h2>
-                            <div className='flex items-center mt-20 w-full max-w-2xl justify-between px-8'>
-                                {StepperOptions.map((option, index) => (
-                                    <React.Fragment key={option.id}>
-                                        <div className='flex flex-col items-center'>
-                                            <div className={`text-3xl p-2 rounded-full ${activeStep >= option.id ? 'bg-blue-950 text-white' : 'bg-gray-200'}`}>{option.icon}</div>
-                                            <h3 className='mt-2 text-sm text-center'>{option.name}</h3>
-                                        </div>
-                                        {index < StepperOptions.length - 1 && <div className={`flex-1 h-1 rounded-full mx-4 ${activeStep > option.id ? 'bg-blue-950' : 'bg-gray-200'}`}></div>}
-                                    </React.Fragment>
-                                ))}
-                            </div>
-                        </div>
-                        <div className='mt-10'>
-                            {activeStep === 1 && <CategoryForm onSelectCategory={(value) => handleFormChange('category', value)} selectedCategory={formData.category} />}
-                            {activeStep === 2 && <TopicDetailsForm courseDetails={formData} onInputChange={(key, value) => handleFormChange(key, value)} />}
-                            {activeStep === 3 && <OptionsForm courseOptions={formData} onOptionChange={(key, value) => handleFormChange(key, value)} />}
-                        </div>
-                        <div className='flex justify-center mt-10 gap-5'>
-                            <Button onClick={handlePrevious} variant='outline' disabled={activeStep === 1}>Previous</Button>
-                            <Button onClick={handleClick} disabled={isNextDisabled}>{buttonText}</Button>
-                        </div>
-                    </>
-                );
+                return null;
         }
     };
 
     return (
         <div className='bg-gray-50 flex flex-col items-center min-h-screen p-6'>
-            <div className='w-full max-w-4xl bg-white p-8 rounded-2xl shadow-xl'>
-                {renderContent()}
+            <div className='w-full bg-white p-8 rounded-2xl shadow-xl'>
+                <div className='flex flex-col justify-center items-center mt-10'>
+                    <h2 className='text-4xl font-medium'>Create Course</h2>
+                    <div className='flex items-center mt-20 w-full max-w-2xl justify-between px-8'>
+                        {StepperOptions.map((option, index) => (
+                            <React.Fragment key={option.id}>
+                                <div className='flex flex-col items-center'>
+                                    <div className={`text-3xl p-2 rounded-full ${activeStep >= option.id ? 'bg-blue-950 text-white' : 'bg-gray-200'}`}>
+                                        {option.icon}
+                                    </div>
+                                    <h3 className='mt-2 text-sm text-center'>{option.name}</h3>
+                                </div>
+                                {index < StepperOptions.length - 1 && (
+                                    <div className={`flex-1 h-1 rounded-full mx-4 ${activeStep > option.id ? 'bg-blue-950' : 'bg-gray-200'}`}></div>
+                                )}
+                            </React.Fragment>
+                        ))}
+                    </div>
+                </div>
+
+                <div className='mt-10'>
+                    {renderStepContent()}
+                </div>
+
+                <div className='flex justify-center mt-10 gap-5'>
+                    <Button onClick={handlePrevious} variant='outline' disabled={activeStep === 1}>Previous</Button>
+                    <Button onClick={handleClick}  disabled={isNextDisabled}>{buttonText} </Button>
+                </div>
             </div>
         </div>
     );
 }
-
-export default CreateCourse;
