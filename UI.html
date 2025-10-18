@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Generator</title>
+    <link rel="stylesheet" href="UI.css"> 
+</head>
+<body>
+    <div class="page-wrapper">
+        <header class="page-header">
+            <h1>Course Generator</h1>
+            <p class="tagline">Define your vision and let the intelligence craft your custom course outline!!</p>
+        </header>
+        
+        <form class="main-form" id="course-form">
+            
+            <div class="input-block">
+                <label for="topic-name">Course Subject</label>
+                <input type="text" id="topic-name" name="topic" placeholder="e.g..Data Science" required>
+            </div>
+            
+            <div class="input-block">
+                <label for="course-time">Course Duration</label>
+                <select id="course-time" name="duration" required>
+                    <option value="">Select a time period...</option>
+                    <option value="one_week">1 week</option>
+                    <option value="one_month">4 weeks</option>
+                    <option value="three_months">3 months</option>
+                    <option value="flexible">To Be Determined</option>
+                </select>
+            </div>
+            
+            <div class="input-block">
+                <label for="learner-level">Learner Proficiency</label>
+                <select id="learner-level" name="level" required>
+                    <option value="">Choose the difficulty level...</option>
+                    <option value="beginner">Beginner</option>
+                    <option value="intermediate">Intermediate</option>
+                    <option value="advanced">Advanced</option>
+                </select>
+            </div>
+            
+            <button type="submit" class="cta-button">
+                Generate Course 
+            </button>
+        </form>
+
+        <section class="results-box" id="results-section">
+            <h2>Generated Course Preview</h2>
+            <p class="placeholder-text">Your course will appear here !</p>
+        </section>
+    </div>
+</body>
+</html>
