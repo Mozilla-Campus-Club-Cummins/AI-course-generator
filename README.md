@@ -9,6 +9,7 @@ Our aim is to help students contribute to real-world projects while learning and
 
 
 ##  About This Repository
+Kindly contribute to the master branch and not the main 
 This repository was created specifically to **support open-source participation among all**.  
 The issues listed here will range in difficulty — from **beginner-friendly** to **advanced-level** — ensuring everyone has a fair opportunity to contribute.
 
